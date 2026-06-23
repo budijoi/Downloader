@@ -58,35 +58,47 @@ app.post('/api/download', (req, res) => {
 
   const ext = type === 'audio' ? 'mp3' : 'mp4';
   const baseName = filename ? sanitizeFilename(filename) : 'download';
-  res.setHeader('Content-Disposition', `attachment; filename="${baseName}.${ext}"`);
-  res.setHeader('Content-Type', type === 'audio' ? 'audio/mpeg' : 'video/mp4');
+  const tmpFile = path.join(os.tmpdir(), `dl-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`);
 
   let args;
   if (type === 'audio') {
-    args = [...YT_DLP, '-x', '--audio-format', 'mp3', '--audio-quality', '0', '-o', '-', url];
+    args = [...YT_DLP, '-x', '--audio-format', 'mp3', '--audio-quality', '0', '-o', tmpFile, url];
   } else if (format_id) {
-    args = [...YT_DLP, '-f', `${format_id}+bestaudio[ext=m4a]/best[ext=mp4]`, '-o', '-', url];
+    args = [...YT_DLP, '-f', `${format_id}+bestaudio[ext=m4a]/best[ext=mp4]`, '--remux-video', 'mp4', '-o', tmpFile, url];
   } else {
-    args = [...YT_DLP, '-f', 'best[ext=mp4]/best', '-o', '-', url];
+    args = [...YT_DLP, '-f', 'best[ext=mp4]/best', '-o', tmpFile, url];
   }
 
   const proc = spawn(args[0], args.slice(1), {
     stdio: ['ignore', 'pipe', 'pipe'],
-    timeout: 300000
-  });
-
-  proc.on('error', () => {
-    if (!res.headersSent) res.status(500).json({ error: 'Failed to start download process.' });
+    timeout: 600000
   });
 
   let stderrBuf = '';
   proc.stderr.on('data', (chunk) => { stderrBuf += chunk.toString(); });
-  proc.stdout.pipe(res);
+
+  proc.on('error', () => {
+    res.status(500).json({ error: 'Failed to start download process.' });
+    try { fs.unlinkSync(tmpFile); } catch (_) {}
+  });
 
   proc.on('close', (code) => {
-    if (code !== 0 && stderrBuf.trim()) {
-      console.error('yt-dlp stderr:', stderrBuf);
+    if (code !== 0) {
+      const msg = stderrBuf.split('\n').filter(l => l.trim()).pop() || 'Download failed';
+      res.status(400).json({ error: msg });
+      try { fs.unlinkSync(tmpFile); } catch (_) {}
+      return;
     }
+    res.setHeader('Content-Disposition', `attachment; filename="${baseName}.${ext}"`);
+    res.setHeader('Content-Type', type === 'audio' ? 'audio/mpeg' : 'video/mp4');
+    const stream = fs.createReadStream(tmpFile);
+    stream.pipe(res);
+    stream.on('end', () => {
+      try { fs.unlinkSync(tmpFile); } catch (_) {}
+    });
+    stream.on('error', () => {
+      try { fs.unlinkSync(tmpFile); } catch (_) {}
+    });
   });
 });
 
