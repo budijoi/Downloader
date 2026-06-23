@@ -53,8 +53,13 @@ app.post('/api/info', (req, res) => {
 });
 
 app.post('/api/download', (req, res) => {
-  const { url, type, format_id } = req.body;
+  const { url, type, format_id, filename } = req.body;
   if (!url) return res.status(400).json({ error: 'URL is required' });
+
+  const ext = type === 'audio' ? 'mp3' : 'mp4';
+  const baseName = filename ? sanitizeFilename(filename) : 'download';
+  res.setHeader('Content-Disposition', `attachment; filename="${baseName}.${ext}"`);
+  res.setHeader('Content-Type', type === 'audio' ? 'audio/mpeg' : 'video/mp4');
 
   let args;
   if (type === 'audio') {
@@ -70,32 +75,17 @@ app.post('/api/download', (req, res) => {
     timeout: 300000
   });
 
-  proc.on('error', (err) => {
-    res.status(500).json({ error: 'Failed to start download process.' });
+  proc.on('error', () => {
+    if (!res.headersSent) res.status(500).json({ error: 'Failed to start download process.' });
   });
 
-  let headersSent = false;
   let stderrBuf = '';
-
-  proc.stderr.on('data', (chunk) => {
-    stderrBuf += chunk.toString();
-    const match = stderrBuf.match(/Destination:\s+(.+)/);
-    if (!headersSent && match) {
-      headersSent = true;
-      const ext = type === 'audio' ? 'mp3' : path.extname(match[1]).replace('.', '') || 'mp4';
-      const titleLine = stderrBuf.match(/\[download\]\s+(.+?)\s+has already been downloaded/);
-      const baseName = titleLine ? sanitizeFilename(titleLine[1].trim()) : `download.${ext}`;
-      res.setHeader('Content-Disposition', `attachment; filename="${baseName}.${ext}"`);
-      res.setHeader('Content-Type', type === 'audio' ? 'audio/mpeg' : 'video/mp4');
-    }
-  });
-
+  proc.stderr.on('data', (chunk) => { stderrBuf += chunk.toString(); });
   proc.stdout.pipe(res);
 
   proc.on('close', (code) => {
-    if (code !== 0 && !headersSent) {
-      const msg = stderrBuf.split('\n').filter(l => l.trim()).pop() || 'Download failed';
-      res.status(400).json({ error: msg });
+    if (code !== 0 && stderrBuf.trim()) {
+      console.error('yt-dlp stderr:', stderrBuf);
     }
   });
 });

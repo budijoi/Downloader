@@ -375,7 +375,7 @@ function buildResSelector(formats) {
 
 async function downloadMedia(url, type, info) {
   setStatus('Starting download...', '');
-  const body = { url, type };
+  const body = { url, type, filename: info.title || '' };
   if (type === 'video' && selectedFormatId) body.format_id = selectedFormatId;
   try {
     const res = await fetch('/api/download', {
