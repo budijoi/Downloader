@@ -72,6 +72,12 @@ Tunggu sampai masing-masing selesai (tidak ada pesan error merah).
 
 ## Cara Menjalankan
 
+### Opsi 1: Double-klik (Windows)
+
+Jalankan `dist/MediaDownloader.exe` atau `dist/start.bat` — langsung buka browser.
+
+### Opsi 2: Terminal
+
 ```bash
 npm start
 ```
@@ -161,6 +167,10 @@ Browser ──→ Server (Node.js) ──→ yt-dlp ──→ YouTube / TikTok /
 4. File dikirim ke browser, langsung terunduh
 
 ---
+
+## Catatan
+
+- **APK (Android):** Tidak tersedia. Aplikasi ini membutuhkan Node.js + Python + ffmpeg yang berjalan sebagai server — Android tidak mendukungnya secara native. Alternatif: jalankan server di PC, lalu akses dari browser HP di jaringan yang sama.
 
 ## Lisensi
 
