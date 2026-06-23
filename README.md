@@ -1,80 +1,167 @@
 # Media Downloader
 
-Aplikasi web untuk mengunduh video dan audio dari **YouTube, Facebook, Instagram, TikTok, X (Twitter), dan Threads**.
+Aplikasi untuk mengunduh video dan audio dari **YouTube, Facebook, Instagram, TikTok, X (Twitter), dan Threads**.
 
-## Fitur
+Cukup tempel link, pilih kualitas, lalu download — langsung dari browser.
 
-- Mendeteksi platform secara otomatis dari link yang ditempel
-- Menampilkan informasi media (judul, thumbnail, durasi, resolusi)
-- Pilih resolusi video sebelum mengunduh (144p s.d. 2160p)
-- Unduh audio sebagai MP3
-- Streaming download langsung ke browser (tidak menyimpan file di server)
+![Preview](https://img.shields.io/badge/Platform-Web-blue)
+![Node](https://img.shields.io/badge/Node.js-18%2B-green)
+![Python](https://img.shields.io/badge/Python-3.8%2B-yellow)
 
-## Prasyarat
+---
 
-- **Node.js** v18+
-- **Python** 3.8+ dengan **yt-dlp** terinstal
-- **ffmpeg** (untuk konversi audio dan merge video+audio)
+## Yang Perlu Disiapkan
 
-## Instalasi
+Sebelum memulai, pastikan komputer sudah memiliki 3 hal ini:
+
+### 1. Node.js
+
+Cek dengan membuka **Command Prompt** atau **PowerShell**, ketik:
 
 ```bash
-# 1. Install dependencies Node.js
-cd Downloader
-npm install
-
-# 2. Install yt-dlp
-python -m pip install yt-dlp
-
-# 3. Install ffmpeg (jika belum ada)
-#   Windows: winget install "FFmpeg (Essentials Build)"
-#   macOS:   brew install ffmpeg
-#   Linux:   sudo apt install ffmpeg
+node --version
 ```
 
-## Menjalankan
+Jika muncul angka seperti `v22.22.3` — berarti sudah ada.\
+Jika muncul `node not recognized` — download dan install dari https://nodejs.org (pipihkan tombol LTS).
+
+### 2. Python
+
+Cek dengan:
+
+```bash
+python --version
+```
+
+Harus muncul `Python 3.8` atau lebih baru.\
+Jika belum ada, download dari https://www.python.org/downloads/.\
+**Centang "Add Python to PATH" saat install.**
+
+### 3. ffmpeg
+
+Cek dengan:
+
+```bash
+ffmpeg -version
+```
+
+Jika belum ada:
+- **Windows:** `winget install "FFmpeg (Essentials Build)"`
+- **macOS:** `brew install ffmpeg`
+- **Linux:** `sudo apt install ffmpeg`
+
+Atau download manual dari https://ffmpeg.org/download.html
+
+---
+
+## Cara Install
+
+Buka **Command Prompt / PowerShell** di folder proyek ini, lalu jalankan perintah berikut satu per satu:
+
+```bash
+# 1. Install dependensi Node.js (express, cors, dll)
+npm install
+
+# 2. Install yt-dlp (mesin download untuk semua platform)
+python -m pip install yt-dlp
+```
+
+Tunggu sampai masing-masing selesai (tidak ada pesan error merah).
+
+---
+
+## Cara Menjalankan
 
 ```bash
 npm start
 ```
 
-Buka **http://localhost:3000** di browser.
+Akan muncul tulisan:
 
-## Cara Penggunaan
+```
+Server running at http://localhost:3000
+```
 
-1. Tempel link video dari platform yang didukung
-2. Klik **Get Media** — thumbnail, judul, dan daftar resolusi akan muncul
-3. (Opsional) Klik salah satu chip resolusi untuk memilih kualitas
-4. Klik **Download Video** atau **Download Audio**
+Artinya server sudah nyala. Sekarang buka browser dan ketik:
 
-## Struktur Proyek
+```
+http://localhost:3000
+```
+
+---
+
+## Cara Pakai
+
+### 1. Tempel link
+
+Copy link video dari YouTube, TikTok, Instagram, Facebook, X, atau Threads.\
+Tempel ke kotak input di halaman web.
+
+Link otomatis dikenali — badge platform akan menyala (misal tulisan **YouTube** jadi biru).
+
+### 2. Klik "Get Media"
+
+Muncul thumbnail, judul, durasi, dan daftar resolusi (144p, 360p, 720p, 1080p, dst).
+
+### 3. Pilih resolusi (opsional)
+
+Klik salah satu chip kualitas, misal **720p** atau **1080p**.\
+Chip yang dipilih akan berubah warna menjadi biru.\
+Jika tidak memilih, sistem akan mengambil kualitas terbaik yang tersedia.
+
+### 4. Klik Download
+
+- **Download Video** → file `.mp4`
+- **Download Audio** → file `.mp3`
+
+File akan langsung terunduh ke komputer.
+
+---
+
+## Troubleshooting
+
+| Masalah | Penyebab | Solusi |
+|---|---|---|
+| Muncul "Server error" setelah Get Media | Link tidak valid atau yt-dlp bermasalah | Cek link, pastikan video bisa diakses publik |
+| Download tidak dimulai | Cache browser lama | Tekan **Ctrl + F5** (hard refresh) |
+| Video tidak bisa diputar | Proses merge gagal | Coba pilih resolusi lebih rendah, atau jangan pilih resolusi (biar auto) |
+| Error "Python not found" | Python tidak terdaftar di PATH | Install ulang Python, centang "Add Python to PATH" |
+| Error "ffmpeg not found" | ffmpeg belum terinstal | Install ffmpeg (lihat panduan di atas) |
+| Download lambat | Ukuran file besar | Tunggu, atau pilih resolusi lebih rendah |
+
+---
+
+## Struktur Folder
 
 ```
 Downloader/
-├── index.html      # Frontend (single-page)
-├── server.js       # Backend Express + yt-dlp
-├── package.json    # Konfigurasi npm
-└── README.md       # Dokumentasi
+├── index.html      Halaman web (tampilan)
+├── server.js       Backend (logika download)
+├── package.json    Daftar dependensi Node.js
+└── README.md       Dokumen ini
 ```
 
-## API
+---
 
-### `POST /api/info`
+## Cara Kerja (untuk yang penasaran)
 
-Mengembalikan metadata media dari URL.
+```
+Browser ──→ Server (Node.js) ──→ yt-dlp ──→ YouTube / TikTok / dll
+                │
+                ↓
+         File dikirim ke browser
+                │
+                ↓
+         Tersimpan di komputer
+```
 
-**Request:** `{ "url": "https://..." }`
+1. Browser kirim link ke server
+2. Server panggil **yt-dlp** (tool Python) untuk ambil info atau download video
+3. **ffmpeg** dipakai untuk menggabungkan video + audio (kalau terpisah) dan konversi ke MP3
+4. File dikirim ke browser, langsung terunduh
 
-**Response:** `{ title, thumbnail, duration, resolution, ext, formats[] }`
-
-### `POST /api/download`
-
-Mengunduh media dan mengirimkannya sebagai file.
-
-**Request:** `{ "url": "...", "type": "video|audio", "format_id": "..." }`
-
-- `format_id` hanya digunakan jika `type` adalah `"video"` dan pengguna memilih resolusi tertentu.
+---
 
 ## Lisensi
 
-MIT
+MIT — bebas pakai, modifikasi, dan distribusi.
