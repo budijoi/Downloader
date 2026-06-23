@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Media Downloader</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0f0f11;
+  color: #e1e1e6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.container {
+  width: 100%;
+  max-width: 720px;
+  padding: 40px 20px;
+}
+h1 {
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.subtitle {
+  text-align: center;
+  color: #888;
+  margin-bottom: 32px;
+  font-size: 14px;
+}
+.platforms {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+.platform-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #1e1e24;
+  border: 1px solid #2a2a33;
+  color: #aaa;
+  transition: all .2s;
+}
+.platform-badge.active {
+  border-color: #667eea;
+  color: #fff;
+  background: #1a1a2e;
+  box-shadow: 0 0 12px rgba(102,126,234,.15);
+}
+.input-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.input-group input {
+  flex: 1;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid #2a2a33;
+  background: #1a1a20;
+  color: #e1e1e6;
+  font-size: 15px;
+  outline: none;
+  transition: border .2s;
+}
+.input-group input:focus { border-color: #667eea; }
+.input-group input::placeholder { color: #555; }
+.btn {
+  padding: 14px 28px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(102,126,234,.3); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-download {
+  background: #1e1e24;
+  color: #e1e1e6;
+  border: 1px solid #2a2a33;
+  padding: 10px 20px;
+  font-size: 13px;
+}
+.btn-download:hover { background: #2a2a33; }
+.btn-audio { --accent: #22c55e; }
+.btn-video { --accent: #667eea; }
+.result-area {
+  margin-top: 24px;
+}
+.card {
+  background: #1a1a20;
+  border: 1px solid #2a2a33;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 16px;
+  display: none;
+}
+.card.visible { display: block; }
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.card-thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #2a2a33;
+}
+.card-info { flex: 1; min-width: 0; }
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-meta {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+.card-meta span { margin-right: 12px; }
+.res-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.res-chip {
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: 1px solid #2a2a33;
+  background: #1a1a20;
+  color: #aaa;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.res-chip:hover { border-color: #667eea; color: #fff; }
+.res-chip.selected {
+  border-color: #667eea;
+  background: #1a1a2e;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(102,126,234,.15);
+}
+.res-chip.audio-only {
+  border-color: #22c55e44;
+  color: #22c55e;
+}
+.download-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #2a2a33;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: none;
+}
+.spinner.active { display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.status-msg {
+  text-align: center;
+  font-size: 13px;
+  margin-top: 12px;
+  min-height: 20px;
+  color: #888;
+}
+.status-msg.error { color: #ef4444; }
+.status-msg.success { color: #22c55e; }
+@media (max-width: 520px) {
+  .input-group { flex-direction: column; }
+  .btn { text-align: center; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Media Downloader</h1>
+  <p class="subtitle">Download videos &amp; audio from your favorite platforms</p>
+
+  <div class="platforms" id="platforms">
+    <span class="platform-badge">YouTube</span>
+    <span class="platform-badge">Facebook</span>
+    <span class="platform-badge">Instagram</span>
+    <span class="platform-badge">TikTok</span>
+    <span class="platform-badge">X (Twitter)</span>
+    <span class="platform-badge">Threads</span>
+  </div>
+
+  <div class="input-group">
+    <input type="url" id="urlInput" placeholder="Paste link here..." autofocus>
+    <button class="btn btn-primary" id="fetchBtn">Get Media</button>
+  </div>
+
+  <div class="result-area">
+    <div class="card" id="resultCard">
+      <div class="card-header">
+        <img class="card-thumb" id="thumb" src="" alt="thumbnail">
+        <div class="card-info">
+          <div class="card-title" id="title">-</div>
+          <div class="card-meta">
+            <span id="platformLabel">-</span>
+            <span id="duration">-</span>
+            <span id="resolution">-</span>
+          </div>
+        </div>
+      </div>
+      <div class="res-selector" id="resSelector"></div>
+      <div class="download-actions" id="actions">
+        <button class="btn btn-download btn-video" data-type="video">Download Video</button>
+        <button class="btn btn-download btn-audio" data-type="audio">Download Audio</button>
+      </div>
+    </div>
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
+</div>
+
+<script>
+const PLATFORMS = ['youtube', 'facebook', 'instagram', 'tiktok', 'x', 'threads'];
+
+function detectPlatform(url) {
+  const u = url.toLowerCase();
+  if (u.includes('youtube.com') || u.includes('youtu.be')) return 'youtube';
+  if (u.includes('facebook.com') || u.includes('fb.watch') || u.includes('fb.com')) return 'facebook';
+  if (u.includes('instagram.com') || u.includes('instagr.am')) return 'instagram';
+  if (u.includes('tiktok.com') || u.includes('vm.tiktok')) return 'tiktok';
+  if (u.includes('x.com') || u.includes('twitter.com')) return 'x';
+  if (u.includes('threads.net')) return 'threads';
+  return null;
+}
+
+function highlightPlatform(name) {
+  const badges = document.querySelectorAll('.platform-badge');
+  badges.forEach(b => b.classList.remove('active'));
+  if (!name) return;
+  badges.forEach(b => {
+    if (b.textContent.toLowerCase().includes(name)) b.classList.add('active');
+  });
+}
+
+const urlInput = document.getElementById('urlInput');
+const fetchBtn = document.getElementById('fetchBtn');
+const resultCard = document.getElementById('resultCard');
+const thumb = document.getElementById('thumb');
+const title = document.getElementById('title');
+const platformLabel = document.getElementById('platformLabel');
+const duration = document.getElementById('duration');
+const resolution = document.getElementById('resolution');
+const resSelector = document.getElementById('resSelector');
+const actions = document.getElementById('actions');
+const statusMsg = document.getElementById('statusMsg');
+
+let selectedFormatId = null;
+
+urlInput.addEventListener('input', () => {
+  const p = detectPlatform(urlInput.value);
+  highlightPlatform(p);
+});
+
+fetchBtn.addEventListener('click', fetchMedia);
+urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') fetchMedia(); });
+
+async function fetchMedia() {
+  const url = urlInput.value.trim();
+  if (!url) {
+    setStatus('Please paste a link first.', 'error');
+    return;
+  }
+  const platform = detectPlatform(url);
+  if (!platform) {
+    setStatus('Unsupported platform. Try YouTube, Facebook, Instagram, TikTok, X, or Threads.', 'error');
+    return;
+  }
+
+  setStatus('', '');
+  fetchBtn.disabled = true;
+  fetchBtn.textContent = 'Processing...';
+  resultCard.classList.remove('visible');
+
+  try {
+    const res = await fetch('/api/info', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Server error (${res.status})`);
+    }
+
+    const data = await res.json();
+
+    thumb.src = data.thumbnail || '';
+    title.textContent = data.title || 'Untitled';
+    platformLabel.textContent = platform.charAt(0).toUpperCase() + platform.slice(1);
+    duration.textContent = data.duration ? formatDuration(data.duration) : '';
+    resolution.textContent = data.resolution || '';
+
+    buildResSelector(data.formats || []);
+    selectedFormatId = null;
+
+    const btns = actions.querySelectorAll('.btn-download');
+    btns.forEach(btn => {
+      const type = btn.dataset.type;
+      btn.onclick = () => downloadMedia(url, type, data);
+    });
+
+    resultCard.classList.add('visible');
+    setStatus('Ready to download!', 'success');
+  } catch (err) {
+    setStatus(err.message || 'Failed to fetch media info.', 'error');
+  } finally {
+    fetchBtn.disabled = false;
+    fetchBtn.textContent = 'Get Media';
+  }
+}
+
+function buildResSelector(formats) {
+  resSelector.innerHTML = '';
+  const seen = new Set();
+  const chips = [];
+
+  formats.forEach(f => {
+    if (f.resolution === 'audio' || seen.has(f.resolution)) return;
+    seen.add(f.resolution);
+    chips.push(f);
+  });
+
+  if (chips.length === 0) {
+    resSelector.style.display = 'none';
+    return;
+  }
+
+  resSelector.style.display = 'flex';
+  chips.forEach(f => {
+    const el = document.createElement('span');
+    el.className = 'res-chip' + (f.resolution === 'audio' ? ' audio-only' : '');
+    el.textContent = f.resolution;
+    el.dataset.formatId = f.format_id;
+    el.addEventListener('click', () => {
+      resSelector.querySelectorAll('.res-chip').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedFormatId = f.format_id;
+    });
+    resSelector.appendChild(el);
+  });
+}
+
+async function downloadMedia(url, type, info) {
+  setStatus('Starting download...', '');
+  const body = { url, type };
+  if (type === 'video' && selectedFormatId) body.format_id = selectedFormatId;
+  try {
+    const res = await fetch('/api/download', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Download failed (${res.status})`);
+    }
+
+    // trigger file download
+    const blob = await res.blob();
+    const contentDisp = res.headers.get('Content-Disposition') || '';
+    const match = contentDisp.match(/filename="?(.+?)"?$/);
+    const filename = match ? match[1] : `${info.title || 'download'}.${type === 'audio' ? 'mp3' : 'mp4'}`;
+
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+
+    setStatus('Download complete!', 'success');
+  } catch (err) {
+    setStatus(err.message || 'Download failed.', 'error');
+  }
+}
+
+function formatDuration(s) {
+  if (!s) return '';
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+function setStatus(msg, type) {
+  statusMsg.textContent = msg;
+  statusMsg.className = 'status-msg' + (type ? ' ' + type : '');
+}
+</script>
+</body>
+</html>
