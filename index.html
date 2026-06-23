@@ -251,7 +251,7 @@ function detectPlatform(url) {
   if (u.includes('instagram.com') || u.includes('instagr.am')) return 'instagram';
   if (u.includes('tiktok.com') || u.includes('vm.tiktok')) return 'tiktok';
   if (u.includes('x.com') || u.includes('twitter.com')) return 'x';
-  if (u.includes('threads.net')) return 'threads';
+  if (u.includes('threads.net') || u.includes('threads.com')) return 'threads';
   return null;
 }
 
@@ -298,16 +298,19 @@ async function fetchMedia() {
     return;
   }
 
-  setStatus('', '');
+    setStatus('', '');
   fetchBtn.disabled = true;
   fetchBtn.textContent = 'Processing...';
   resultCard.classList.remove('visible');
+
+  let apiUrl = url;
+  if (platform === 'threads') apiUrl = apiUrl.replace(/threads\.com/i, 'threads.net');
 
   try {
     const res = await fetch('/api/info', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url })
+      body: JSON.stringify({ url: apiUrl })
     });
 
     if (!res.ok) {
@@ -375,7 +378,9 @@ function buildResSelector(formats) {
 
 async function downloadMedia(url, type, info) {
   setStatus('Starting download...', '');
-  const body = { url, type, filename: info.title || '' };
+  let dlUrl = url;
+  if (detectPlatform(url) === 'threads') dlUrl = dlUrl.replace(/threads\.com/i, 'threads.net');
+  const body = { url: dlUrl, type, filename: info.title || '' };
   if (type === 'video' && selectedFormatId) body.format_id = selectedFormatId;
   try {
     const res = await fetch('/api/download', {
