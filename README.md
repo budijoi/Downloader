@@ -134,6 +134,7 @@ File akan langsung terunduh ke komputer.
 | Error "Python not found" | Python tidak terdaftar di PATH | Install ulang Python, centang "Add Python to PATH" |
 | Error "ffmpeg not found" | ffmpeg belum terinstal | Install ffmpeg (lihat panduan di atas) |
 | Download lambat | Ukuran file besar | Tunggu, atau pilih resolusi lebih rendah |
+| node_modules terlanjur di-push | Sudah terlacak git | `git rm -r --cached node_modules` lalu commit |
 
 ---
 
@@ -141,10 +142,14 @@ File akan langsung terunduh ke komputer.
 
 ```
 Downloader/
-├── index.html      Halaman web (tampilan)
-├── server.js       Backend (logika download)
-├── package.json    Daftar dependensi Node.js
-└── README.md       Dokumen ini
+├── index.html          Halaman web (tampilan)
+├── server.js           Backend (logika download)
+├── package.json        Daftar dependensi Node.js
+├── dist/               Launcher Windows
+│   ├── MediaDownloader.exe   EXE launcher
+│   ├── MediaDownloader.ps1   Script PowerShell
+│   └── start.bat             Batch file
+└── README.md           Dokumen ini
 ```
 
 ---
@@ -162,15 +167,18 @@ Browser ──→ Server (Node.js) ──→ yt-dlp ──→ YouTube / TikTok /
 ```
 
 1. Browser kirim link ke server
-2. Server panggil **yt-dlp** (tool Python) untuk ambil info atau download video
-3. **ffmpeg** dipakai untuk menggabungkan video + audio (kalau terpisah) dan konversi ke MP3
-4. File dikirim ke browser, langsung terunduh
+2. Untuk YouTube/Facebook/Instagram/TikTok/X: server panggil **yt-dlp** (tool Python)
+3. Untuk **Threads**: server panggil API `lovethreads.net` sebagai proxy
+4. **ffmpeg** dipakai untuk menggabungkan video + audio (kalau terpisah) dan konversi ke MP3
+5. File dikirim ke browser, langsung terunduh
 
 ---
 
 ## Catatan
 
 - **APK (Android):** Tidak tersedia. Aplikasi ini membutuhkan Node.js + Python + ffmpeg yang berjalan sebagai server — Android tidak mendukungnya secara native. Alternatif: jalankan server di PC, lalu akses dari browser HP di jaringan yang sama.
+- **node_modules** tidak di-push ke GitHub. Clone repo lalu jalankan `npm install` untuk menginstal dependensi.
+- **Threads** tidak didukung yt-dlp langsung. Server menggunakan `lovethreads.net` sebagai proxy untuk mengambil video.
 
 ## Lisensi
 
